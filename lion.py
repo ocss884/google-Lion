@@ -23,7 +23,8 @@ class Lion(Optimizer):
                 params, 
                 lr: float = 1e-4, 
                 betas: Tuple[float, float] = (.9, .99),
-                weight_decay: float = 0
+                weight_decay: float = 0,
+                differentiable: bool = False
                 ):
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -34,7 +35,7 @@ class Lion(Optimizer):
         if not 0.0 <= weight_decay:
             raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
         
-        defaults = dict(lr=lr, betas=betas, weight_decay=weight_decay)
+        defaults = dict(lr=lr, betas=betas, weight_decay=weight_decay, differentiable=differentiable)
         super(Lion, self).__init__(params, defaults)
 
     @_use_grad_for_differentiable
@@ -50,8 +51,7 @@ class Lion(Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-
-            beta1, beta2 = self.betas
+            beta1, beta2 = group["betas"]
             for p in group['params']:
                 if p.grad is not None:
 
@@ -62,11 +62,10 @@ class Lion(Optimizer):
 
                     grad = p.grad
                     update = torch.sign((beta1 * exp_avg + (1 - beta1) * grad))
-                    update += self.weight_decay * p.data
+                    update += group["weight_decay"] * p.data
                     p.add_(update, alpha= -group['lr'])
                     # Update EMA
                     exp_avg.mul_(beta2).add_(grad, alpha=1 - beta2)
 
         return loss
-    
 
