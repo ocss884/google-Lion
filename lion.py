@@ -1,4 +1,5 @@
 ### https://arxiv.org/abs/2302.06675
+### MIT License
 
 import torch
 from torch import nn
